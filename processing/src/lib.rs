@@ -1,45 +1,70 @@
-use glium::{glutin, Display};
-use std::{ffi::CStr, os::raw::c_char};
+use glium::{ glutin, Display };
+use std::os::raw::c_char;
+pub mod utils;
+
 
 type Callback = extern fn();
 extern fn empty_callback () {}
-static mut DRAW_CALLBACK: Callback = empty_callback;
 
 
-unsafe fn sanitize_c_str (string: *const c_char) -> String {
-  let c_str = CStr::from_ptr(string);
-  let str_slice = c_str.to_str().unwrap();
-  String::from(str_slice)
+#[derive(Debug)]
+struct Globals {
+  pub display: Option<Display>,
+  setup_method: Callback,
+  draw_method: Callback,
 }
 
-pub fn to_c_str (string: &str) -> *const c_char {
-  let c_str = std::ffi::CString::new(string).unwrap();
-  let ptr = c_str.as_ptr();
-  std::mem::forget(c_str);
-  ptr
+static mut GLOBALS: Globals = Globals {
+  display: None,
+  setup_method: empty_callback,
+  draw_method: empty_callback,
+};
+
+impl Globals {
+  pub fn draw (&self) {
+    (self.draw_method)();
+  }
+
+  pub fn setup (&self) {
+    (self.setup_method)();
+  }
+
+  pub fn set_draw (&mut self, draw: Callback) {
+    self.draw_method = draw;
+  }
+
+  pub fn set_setup (&mut self, setup: Callback) {
+    self.setup_method = setup;
+  }
+
+  pub fn set_display (&mut self, display: Display) {
+    self.display = Some(display);
+  }
 }
 
 
 #[no_mangle]
 pub extern fn create_window (name: *const c_char, width: u32, height: u32) {
 
-  let event_loop = glutin::event_loop::EventLoop::new();
+  let window_name = unsafe { utils::sanitize_c_str(name) };   
   
-  
-  let window_name = unsafe { sanitize_c_str(name) };   
 
+  let event_loop = glutin::event_loop::EventLoop::new();
   let wb = glutin::window::WindowBuilder::new()
           .with_inner_size(glutin::dpi::LogicalSize::new(width, height))
-          .with_title(window_name);
-        
+          .with_title(window_name);      
   let cb = glutin::ContextBuilder::new();
-  let _display = Display::new(wb, cb, &event_loop).unwrap();
+  
+
+
+  let display = Display::new(wb, cb, &event_loop).unwrap();
+  unsafe { GLOBALS.set_display(display) }
+
+
 
   event_loop.run(move |event, _, control_flow| {
 
-    unsafe {
-      DRAW_CALLBACK();
-    }
+    unsafe { GLOBALS.draw() }
 
     match event {
       glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -62,7 +87,13 @@ pub extern fn create_window (name: *const c_char, width: u32, height: u32) {
 #[no_mangle]
 pub extern fn p_init (setup: Callback, draw: Callback) {
   unsafe {
-    DRAW_CALLBACK = draw;
+    GLOBALS.set_draw(draw);
+    GLOBALS.set_setup(setup);
+    GLOBALS.setup();
   }
-  setup();
+}
+
+#[no_mangle]
+pub extern fn background () {
+
 }

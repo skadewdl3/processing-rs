@@ -1,4 +1,5 @@
 use processing::*;
+use processing::utils::to_c_str;
 
 
 extern fn setup () {
