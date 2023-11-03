@@ -3,7 +3,7 @@ use processing::utils::to_c_str;
 
 
 extern fn setup () {
-	create_window(to_c_str("My Window"), 800, 600)
+	create_window(to_c_str("Hello WOrld"), 800, 800)
 }
 
 extern fn draw () {
@@ -12,4 +12,5 @@ extern fn draw () {
 
 fn main () {
 	p_init(setup, draw);
+	p_run();
 }

@@ -12,3 +12,4 @@ cbindgen = "0.26.0"
 
 [dependencies]
 glium = "0.32.1"
+state = { version = "0.6.0", features = ["tls"]}

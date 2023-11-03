@@ -1,11 +1,18 @@
+/*
 use glium::{ glutin, Display };
 use std::os::raw::c_char;
 pub mod utils;
 
 
 type Callback = extern fn();
+type Setter = extern fn(Callback);
 extern fn empty_callback () {}
 
+
+#[repr(C)]
+pub enum PAppletOptions {
+  MouseOver
+}
 
 #[derive(Debug)]
 struct Globals {
@@ -13,6 +20,17 @@ struct Globals {
   setup_method: Callback,
   draw_method: Callback,
 }
+
+
+#[derive(Debug)]
+#[repr(C)]  
+pub struct PApplet {
+  pub display: Option<Display>,
+  setup_method: Callback,
+  draw_method: Callback,
+  mouse_over: Option<Callback>,
+}
+
 
 static mut GLOBALS: Globals = Globals {
   display: None,
@@ -41,7 +59,6 @@ impl Globals {
     self.display = Some(display);
   }
 }
-
 
 #[no_mangle]
 pub extern fn create_window (name: *const c_char, width: u32, height: u32) {
@@ -85,15 +102,95 @@ pub extern fn create_window (name: *const c_char, width: u32, height: u32) {
 
 
 #[no_mangle]
-pub extern fn p_init (setup: Callback, draw: Callback) {
+pub extern fn p_init (setup: Callback, draw: Callback) -> PApplet {
+  let applet = PApplet {
+    display: None,
+    setup_method: setup,
+    draw_method: draw,
+    mouse_over: None,
+  };
+  applet
+}
+
+pub extern fn p_run () {
   unsafe {
-    GLOBALS.set_draw(draw);
-    GLOBALS.set_setup(setup);
     GLOBALS.setup();
   }
-}
+} 
 
 #[no_mangle]
 pub extern fn background () {
+
+}
+*/
+
+use glium::{ glutin, Display };
+use std::{os::raw::c_char, borrow::BorrowMut};
+pub mod utils;
+pub mod core;
+use core::{Callback, P};
+
+
+
+#[no_mangle]
+pub extern "C" fn p_init (setup: Callback, draw: Callback) {
+  P.with(|p| {
+    let mut applet = p.borrow_mut();
+    applet.set_setup(setup);
+    applet.set_draw(draw);
+  }); 
+}
+
+pub extern "C" fn p_run () {
+  let setup = P.with_borrow(|p| p.setup_method).unwrap();
+  setup();
+  }
+
+
+
+#[no_mangle]
+pub extern "C" fn create_window (name: *const c_char, width: u32, height: u32) {
+
+  let window_name = unsafe { utils::sanitize_c_str(name) };   
+  
+
+  let event_loop = glutin::event_loop::EventLoop::new();
+  let wb = glutin::window::WindowBuilder::new()
+          .with_inner_size(glutin::dpi::LogicalSize::new(width, height))
+          .with_title(window_name);      
+  let cb = glutin::ContextBuilder::new();
+  
+
+
+  let display = Display::new(wb, cb, &event_loop).unwrap();
+  
+  {
+    P.with_borrow_mut(|p| p.set_display(display));
+  }
+  
+  event_loop.run(move |event, _, control_flow| {
+
+    {
+      P.with_borrow(|p| p.draw());
+    }
+    
+
+
+    match event {
+      glutin::event::Event::WindowEvent { event, .. } => match event {
+      
+        glutin::event::WindowEvent::CloseRequested => {
+          *control_flow = glutin::event_loop::ControlFlow::Exit;
+          return;
+      
+        },
+        _ => return,
+      
+      },
+      
+      _ => return
+    }
+  })
+
 
 }
