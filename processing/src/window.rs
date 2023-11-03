@@ -143,3 +143,15 @@ impl WindowEvent {
     }
   }
 }
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn mouseX () -> f32 {
+  P.with_borrow(|p| p.mouse_x)
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub extern "C" fn mouseY () -> f32 {
+  P.with_borrow(|p| p.mouse_x)
+}

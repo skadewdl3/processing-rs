@@ -50,4 +50,8 @@ void p_on(enum WindowEvents event, EventHandler handler);
 
 void create_window(const char *name, uint32_t width, uint32_t height);
 
+float mouseX(void);
+
+float mouseY(void);
+
 void triangle(struct Vertex v1, struct Vertex v2, struct Vertex v3);
