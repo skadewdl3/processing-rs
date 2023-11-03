@@ -1,6 +1,6 @@
 use glium::{Display, implement_vertex};
 use std::cell::RefCell;
-use crate::window::{WindowEvents, WindowEvent, MouseEvent, MouseButton};
+use crate::window::{WindowEvents, WindowEvent, MouseButton};
 
 /* Type for a callback function received from FFI
  * 
@@ -38,8 +38,7 @@ pub type Callback = extern fn();
 pub type EventHandler = extern fn (WindowEvent);
 
 
-/*
- * Purpose: Defines the global state for the processing window
+/* Purpose: Defines the global state for the processing window
  * 
  * Fields:
  * display: Option<Display> - the glutin display
@@ -55,7 +54,14 @@ pub struct PApplet {
   pub display: Option<Display>,
   setup_method: Option<Callback>,
   draw_method: Option<Callback>,
-  event_mouse_moved_handler: Option<EventHandler>
+
+  pub mouse_x: f32,
+  pub mouse_y: f32,
+  event_mouse_moved_handler: Option<EventHandler>,
+  event_mouse_pressed_handler: Option<EventHandler>,
+  event_mouse_released_handler: Option<EventHandler>,
+  // event_mouse_dragged_handler: Option<EventHandler>,
+  // event_mouse_wheel_handler: Option<EventHandler>
 }
 
 impl PApplet {
@@ -89,21 +95,38 @@ impl PApplet {
     self.display = Some(display);
   }
 
-  pub fn mouse_moved (&self, x: f32, y: f32) {
+  pub fn mouse_moved (&self) {
     if let Some(handler) = self.event_mouse_moved_handler {
-      let e = WindowEvent {
-        mouse_event: MouseEvent::new(x, y, MouseButton::None, WindowEvents::POnMouseMoved)
-      };
+      let e = WindowEvent::new_mouse_event(
+        MouseButton::NoneMouseButton,
+        WindowEvents::PMouseMoved
+      );
       handler(e);
     }
-    else {
-      println!("No mouse moved handler defined");
+  }
+
+  pub fn mouse_pressed (&self, button: MouseButton) {
+    if let Some(handler) = self.event_mouse_pressed_handler {
+      let e = WindowEvent::new_mouse_event(
+        button,
+        WindowEvents::PMousePressed
+      );
+      handler(e);
+    }
+  }
+
+  pub fn mouse_released (&self, button: MouseButton) {
+    if let Some(handler) = self.event_mouse_released_handler {
+      let e = WindowEvent::new_mouse_event(
+        button,
+        WindowEvents::PMouseReleased
+      );
+      handler(e);
     }
   }
 }
 
-/*
- * Vertex struct for glium
+/* Vertex struct for glium
  * Purpose: Defines a vertex struct for glium
  * 
  * Fields:
@@ -284,21 +307,58 @@ pub extern "C" fn p_run () {
   setup();
 }
 
+/* Purpose - Adds event handlers for mouse/keyboard/etc events
+ * 
+ * Input Arguments:
+ *  event: WindowEvents - the event type
+ *  handler: EventHandler - the event handler
+ * 
+ * Example:
+ * -----------------------------------------------
+ * main.c
+ * -----------------------------------------------
+ * #include <processing.h>
+ * 
+ * 
+ * void setup () {
+ *   printf("This is the setup method\n");
+ * }
+ * 
+ * void draw () {
+ *   printf("This is the draw method\n");
+ * }
+ * 
+ * void on_mouse_move () {
+ *   printf("Mouse moved\n");
+ * }
+ * 
+ * int main () {
+ *  p_init(setup, draw);
+ *  p_on(PMouseMoved, on_mouse_move);
+ *  p_run();
+ *  return 0;
+ * }
+ * -----------------------------------------------
+ * 
+ */
+
 #[no_mangle]
 pub extern "C" fn p_on(event: WindowEvents, handler: EventHandler) {
   match event {
-    WindowEvents::POnClick => {
-      println!("POnClick");
+    WindowEvents::PMousePressed => {
+      P.with_borrow_mut(|p| p.event_mouse_pressed_handler = Some(handler));
     },
-    WindowEvents::POnMousePressed => {
-      println!("POnMousePressed");
+    WindowEvents::PMouseReleased => {
+      P.with_borrow_mut(|p| p.event_mouse_released_handler = Some(handler));
     },
-    WindowEvents::POnMouseReleased => {
-      println!("POnMouseReleased");
-    },
-    WindowEvents::POnMouseMoved => {
-      println!("POnMouseMoved");
+    WindowEvents::PMouseMoved => {
       P.with_borrow_mut(|p| p.event_mouse_moved_handler = Some(handler));
     },
+    WindowEvents::PMouseDraged => {
+      println!("adding PMouseDragged handler");
+    },
+    WindowEvents::PMouseWheel => {
+      println!("adding PMouseWheel handler");
+    }
   }
 }

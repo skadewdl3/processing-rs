@@ -12,14 +12,14 @@ extern fn draw () {
 	triangle(vtx(0, 0), vtx(100, 100), vtx(400, 400))
 }
 
-extern fn mouse_moved (e: WindowEvent) {
+extern fn test (e: WindowEvent) {
 	unsafe {
-		println!("({}, {})", e.mouse_event.x, e.mouse_event.y);
+		println!("mouse clicked at: ({}, {})", e.mouse.x, e.mouse.y);
 	}
 }
 
 fn main () {
 	p_init(setup, draw);
-	p_on(WindowEvents::POnMouseMoved, mouse_moved);
+	p_on(WindowEvents::PMousePressed, test);
 	p_run();
 }

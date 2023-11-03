@@ -4,17 +4,18 @@
 #include <stdlib.h>
 
 typedef enum MouseButton {
-  Left,
-  Right,
-  Middle,
-  None,
+  LeftMouseButton,
+  RightMouseButton,
+  MiddleMouseButton,
+  NoneMouseButton,
 } MouseButton;
 
 typedef enum WindowEvents {
-  POnClick,
-  POnMousePressed,
-  POnMouseReleased,
-  POnMouseMoved,
+  PMousePressed,
+  PMouseReleased,
+  PMouseMoved,
+  PMouseWheel,
+  PMouseDraged,
 } WindowEvents;
 
 typedef void (*Callback)(void);
@@ -31,8 +32,8 @@ typedef struct KeyboardEvent {
 } KeyboardEvent;
 
 typedef union WindowEvent {
-  struct MouseEvent mouse_event;
-  struct KeyboardEvent keyboard_event;
+  struct MouseEvent mouse;
+  struct KeyboardEvent keyboard;
 } WindowEvent;
 
 typedef void (*EventHandler)(union WindowEvent);
