@@ -1,3 +1,0 @@
-/home/skadewdl3/Projects/processing_rs/ffi-test/cmake-build-debug/CMakeFiles/ffi_test.dir
-/home/skadewdl3/Projects/processing_rs/ffi-test/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/skadewdl3/Projects/processing_rs/ffi-test/cmake-build-debug/CMakeFiles/rebuild_cache.dir
