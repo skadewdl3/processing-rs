@@ -11,6 +11,8 @@ typedef struct Vertex {
 
 void p_init(Callback setup, Callback draw);
 
+void p_run(void);
+
 void create_window(const char *name, uint32_t width, uint32_t height);
 
 void triangle(struct Vertex v1, struct Vertex v2, struct Vertex v3);
