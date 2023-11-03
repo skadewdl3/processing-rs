@@ -1,5 +1,5 @@
 use glium::Display;
-use std::cell::{RefCell, RefMut};
+use std::cell::RefCell;
 
 pub type Callback = extern fn();
 

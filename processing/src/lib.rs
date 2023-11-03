@@ -124,8 +124,8 @@ pub extern fn background () {
 }
 */
 
-use glium::{ glutin, Display };
-use std::{os::raw::c_char, borrow::BorrowMut};
+use glium::{ glutin, Display, implement_vertex, Surface };
+use std::os::raw::c_char;
 pub mod utils;
 pub mod core;
 use core::{Callback, P};
@@ -193,4 +193,64 @@ pub extern "C" fn create_window (name: *const c_char, width: u32, height: u32) {
   })
 
 
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Vertex {
+  position: [i32; 2]
+}
+
+implement_vertex!(Vertex, position);
+
+pub extern "C" fn vtx (x: i32, y: i32) -> Vertex {
+  Vertex {
+    position: [x, y]
+  }
+}
+
+#[no_mangle]
+pub extern "C" fn triangle (v1: Vertex, v2: Vertex, v3: Vertex) {
+  let shape = vec![v1, v2, v3];
+  P.with_borrow(|p| {
+
+    let display = p.display.as_ref().unwrap();
+    let vertex_buffer = glium::VertexBuffer::new(display, &shape).unwrap();
+    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+  
+  
+  
+    let vertex_shader_src = r#"
+      #version 140
+      in vec2 position;
+
+      void main() {
+          gl_Position = vec4(position, 0.0, 1.0);
+      }
+    "#;
+
+    let fragment_shader_src = r#"
+      #version 140
+      out vec4 color;
+
+      void main() {
+          color = vec4(1.0, 0.0, 0.0, 1.0);
+      }
+    "#;
+
+    let program = glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap();
+  
+  
+    let mut target = display.draw();
+
+    target.clear_color(0.0, 0.0, 1.0, 1.0);
+    target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
+            &Default::default()).unwrap();
+    target.finish().unwrap();
+    
+  
+  
+  
+  
+  });
 }
