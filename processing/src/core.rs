@@ -1,5 +1,6 @@
 use glium::{Display, implement_vertex};
 use std::cell::RefCell;
+use crate::window::{WindowEvents, WindowEvent, MouseEvent, MouseButton};
 
 /* Type for a callback function received from FFI
  * 
@@ -34,6 +35,7 @@ use std::cell::RefCell;
  * are of type Callback.
  */
 pub type Callback = extern fn();
+pub type EventHandler = extern fn (WindowEvent);
 
 
 /*
@@ -51,8 +53,9 @@ pub type Callback = extern fn();
 #[derive(Debug, Default)]
 pub struct PApplet {
   pub display: Option<Display>,
-  pub setup_method: Option<Callback>,
-  pub draw_method: Option<Callback>,
+  setup_method: Option<Callback>,
+  draw_method: Option<Callback>,
+  event_mouse_moved_handler: Option<EventHandler>
 }
 
 impl PApplet {
@@ -84,6 +87,18 @@ impl PApplet {
 
   pub fn set_display (&mut self, display: Display) {
     self.display = Some(display);
+  }
+
+  pub fn mouse_moved (&self, x: f32, y: f32) {
+    if let Some(handler) = self.event_mouse_moved_handler {
+      let e = WindowEvent {
+        mouse_event: MouseEvent::new(x, y, MouseButton::None, WindowEvents::POnMouseMoved)
+      };
+      handler(e);
+    }
+    else {
+      println!("No mouse moved handler defined");
+    }
   }
 }
 
@@ -149,11 +164,7 @@ implement_vertex!(Vertex, position);
  */
 thread_local! {
   pub static P: RefCell<PApplet> = RefCell::new(
-    PApplet {
-      display: None,
-      setup_method: None,
-      draw_method: None
-    }
+    PApplet::default()
   );
 }
 
@@ -271,4 +282,23 @@ pub extern "C" fn p_init (setup: Callback, draw: Callback) {
 pub extern "C" fn p_run () {
   let setup = P.with_borrow(|p| p.setup_method).unwrap();
   setup();
+}
+
+#[no_mangle]
+pub extern "C" fn p_on(event: WindowEvents, handler: EventHandler) {
+  match event {
+    WindowEvents::POnClick => {
+      println!("POnClick");
+    },
+    WindowEvents::POnMousePressed => {
+      println!("POnMousePressed");
+    },
+    WindowEvents::POnMouseReleased => {
+      println!("POnMouseReleased");
+    },
+    WindowEvents::POnMouseMoved => {
+      println!("POnMouseMoved");
+      P.with_borrow_mut(|p| p.event_mouse_moved_handler = Some(handler));
+    },
+  }
 }

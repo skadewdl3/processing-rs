@@ -6,11 +6,15 @@ void setup () {
 }
 
 void draw () {
-    printf("Drawing\n");
+}
+
+void mouse_moved (WindowEvent event) {
+    printf("Mouse position: (%f, %f)\n", event.mouse_event.x, event.mouse_event.y);
 }
 
 int main() {
     p_init(setup, draw);
+    p_on(POnMouseMoved, mouse_moved);
     p_run();
     return 0;
 }
